@@ -62,6 +62,7 @@ started:
 				if checkProcess(response.State.Pid) {
 					containerPID = response.State.Pid
 					log.Println("[*]", "Successfully checked for PID existence.")
+					break started
 				} else {
 					log.Println("[*]", "Failed to check for PID existence.")
 					if checkTries == 0 {
