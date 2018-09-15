@@ -47,7 +47,7 @@ func parseFlags(flags *flags) {
 	flag.StringVar(&((*flags).stopTimeout), "stopTimeout", "", "Timeout before the container is gracefully killed")
 	flag.Parse()
 
-	if (*flags).containerID == "" {
+	if len((*flags).containerID) == 0 {
 		log.Panicln("[!]", "Name or containerID is missing!")
 	}
 
