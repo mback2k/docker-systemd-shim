@@ -20,47 +20,41 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"syscall"
+	"time"
 )
 
 func checkProcess(pid int) bool {
-	var checkResult = false
-
 	process, err := os.FindProcess(pid)
-	if err != nil {
-		log.Println("[i]", "Failed to find process:", err)
-	} else {
+	if err == nil {
 		err := process.Signal(syscall.Signal(0))
-		log.Println("[i]", "Signal on PID", pid, "returned error:", err)
-
 		if err == nil {
-			checkResult = true
+			return true
 		}
 	}
-
-	return checkResult
+	return false
 }
 
-func waitProcess(ctx context.Context, pid int) <-chan bool {
+func watchProcess(ctx context.Context, pid int) <-chan bool {
 	stopped := make(chan bool)
 
 	go func() {
-		process, err := os.FindProcess(pid)
-		if err != nil {
-			log.Println("[i]", "Failed to find process:", err)
+		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
 
-			stopped <- true
-		} else {
-			state, err := process.Wait()
-			log.Println("[i]", "Waiting on PID", pid, "returned error:", err)
-
-			if err == nil {
-				log.Println("[*]", "Waiting on PID", pid, "returned state:", state)
+	loop:
+		for {
+			select {
+			case <-ctx.Done():
+				// returning not to leak the goroutine
+				break loop
+			case <-ticker.C:
+				if !checkProcess(pid) {
+					stopped <- true
+					break loop
+				}
 			}
-
-			stopped <- true
 		}
 
 		close(stopped)

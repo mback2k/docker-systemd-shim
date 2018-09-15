@@ -90,27 +90,27 @@ loop:
 		if pid := startContainer(ctx, cli, flags.containerID,
 			flags.startTries, flags.checkTries, flags.usePID); pid > 0 {
 
-			var watched <-chan bool
-			var waited <-chan bool
+			var container <-chan bool
+			var process <-chan bool
 
-			watched = watchContainer(ctx, cli, flags.containerID)
+			container = watchContainer(ctx, cli, flags.containerID)
 			if flags.usePID {
-				waited = waitProcess(ctx, pid)
+				process = watchProcess(ctx, pid)
 			} else {
-				waited = make(chan bool)
+				process = make(chan bool)
 			}
 
 			select {
 			case <-ctx.Done():
 				// returning not to leak the goroutine
 				break loop
-			case watched := <-watched:
-				if watched {
+			case container := <-container:
+				if container {
 					log.Println("[*]", "Container has stopped (notified via docker) and will be restarted.")
 					continue loop
 				}
-			case waited := <-waited:
-				if waited {
+			case process := <-process:
+				if process {
 					log.Println("[*]", "Container has stopped (notified via system) and will be restarted.")
 					continue loop
 				}
