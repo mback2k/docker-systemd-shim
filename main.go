@@ -107,12 +107,12 @@ loop:
 			case watched := <-watched:
 				if watched {
 					log.Println("[*]", "Container has stopped (notified via docker) and will be restarted.")
-					break loop
+					continue loop
 				}
 			case waited := <-waited:
 				if waited {
 					log.Println("[*]", "Container has stopped (notified via system) and will be restarted.")
-					break loop
+					continue loop
 				}
 			case stop := <-stop:
 				if stop {
