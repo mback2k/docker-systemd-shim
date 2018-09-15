@@ -10,8 +10,8 @@ matrix:
   allow_failures:
     - go: master
 
-before_deploy:
-  - ls -lah
+after_success:
+  - go build
 
 deploy:
   provider: releases
