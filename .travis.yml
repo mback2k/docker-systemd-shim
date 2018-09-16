@@ -11,7 +11,7 @@ matrix:
     - go: master
 
 after_success:
-  - go build
+  - go build -ldflags="-s -w"
 
 deploy:
   provider: releases
