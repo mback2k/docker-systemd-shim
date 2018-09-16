@@ -137,7 +137,7 @@ loop:
 				}
 			case process := <-process:
 				if process {
-					log.Println("[*]", "Container has stopped (notified via system) and will be restarted.")
+					log.Println("[*]", "Container has stopped (notified via ticker) and will be restarted.")
 					if flags.notifySD {
 						daemon.SdNotify(false, daemon.SdNotifyReloading)
 					}
