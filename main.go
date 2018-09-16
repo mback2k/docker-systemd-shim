@@ -25,6 +25,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/coreos/go-systemd/daemon"
 )
 
 type flags struct {
@@ -32,6 +34,7 @@ type flags struct {
 	startTries    int
 	checkTries    int
 	usePID        bool
+	notifySD      bool
 	stopOnSIGTERM bool
 	stopTimeout   string
 }
@@ -43,6 +46,7 @@ func parseFlags(flags *flags) {
 	flag.IntVar(&((*flags).startTries), "startTries", 3, "Number of tries to start the container if it is stopped")
 	flag.IntVar(&((*flags).checkTries), "checkTries", 3, "Number of tries to check the container if it is running")
 	flag.BoolVar(&((*flags).usePID), "usePID", true, "Check existence of process via container PID")
+	flag.BoolVar(&((*flags).notifySD), "notifySD", true, "Notify systemd about service state changes")
 	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true, "Stop the container on system signal SIGTERM")
 	flag.StringVar(&((*flags).stopTimeout), "stopTimeout", "", "Timeout before the container is gracefully killed")
 	flag.Parse()
@@ -88,7 +92,7 @@ loop:
 		defer cancel()
 
 		if pid := startContainer(ctx, cli, flags.containerID,
-			flags.startTries, flags.checkTries, flags.usePID); pid > 0 {
+			flags.startTries, flags.checkTries, flags.usePID, flags.notifySD); pid > 0 {
 
 			var container <-chan bool
 			var process <-chan bool
@@ -100,6 +104,10 @@ loop:
 				process = make(chan bool)
 			}
 
+			if flags.notifySD {
+				daemon.SdNotify(false, daemon.SdNotifyReady)
+			}
+
 			select {
 			case <-ctx.Done():
 				// returning not to leak the goroutine
@@ -107,16 +115,25 @@ loop:
 			case container := <-container:
 				if container {
 					log.Println("[*]", "Container has stopped (notified via docker) and will be restarted.")
+					if flags.notifySD {
+						daemon.SdNotify(false, daemon.SdNotifyReloading)
+					}
 					continue loop
 				}
 			case process := <-process:
 				if process {
 					log.Println("[*]", "Container has stopped (notified via system) and will be restarted.")
+					if flags.notifySD {
+						daemon.SdNotify(false, daemon.SdNotifyReloading)
+					}
 					continue loop
 				}
 			case stop := <-stop:
 				if stop {
 					log.Println("[*]", "Container will be stopped due to system signal.")
+					if flags.notifySD {
+						daemon.SdNotify(false, daemon.SdNotifyStopping)
+					}
 					stopContainer(ctx, cli, flags.containerID, flags.stopTimeout)
 					break loop
 				}

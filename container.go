@@ -23,6 +23,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -37,7 +38,7 @@ func createClient() *client.Client {
 }
 
 func startContainer(ctx context.Context, cli *client.Client, containerID string,
-	startTries int, checkTries int, usePID bool) int {
+	startTries int, checkTries int, usePID bool, notifySD bool) int {
 
 	var containerPID = 0
 
@@ -52,6 +53,10 @@ started:
 			log.Println("[i]", "Container Name:", response.Name)
 			log.Println("[i]", "Container Status:", response.State.Status)
 			log.Println("[i]", "Container PID:", response.State.Pid)
+		}
+
+		if notifySD {
+			daemon.SdNotify(false, "STATUS="+response.State.Status)
 		}
 
 		if response.State.Status == "running" {
