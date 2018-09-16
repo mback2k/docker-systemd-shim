@@ -68,7 +68,22 @@ func checkContainer(ctx context.Context, cli *client.Client, response types.Cont
 	}
 }
 
-func startContainer(ctx context.Context, cli *client.Client, containerName string,
+func startContainer(ctx context.Context, cli *client.Client, containerName string) bool {
+	startOptions := types.ContainerStartOptions{
+		CheckpointID:  "",
+		CheckpointDir: "",
+	}
+	err := cli.ContainerStart(ctx, containerName, startOptions)
+	if err != nil {
+		log.Println("[!]", err)
+		return false
+	} else {
+		log.Println("[*]", "Successfully started container.")
+		return true
+	}
+}
+
+func runContainer(ctx context.Context, cli *client.Client, containerName string,
 	startTries int, checkTries int, usePID bool, useCGroup bool, notifySD bool) (string, int) {
 
 	var containerID = ""
@@ -109,17 +124,8 @@ started:
 			break started
 		} else {
 			log.Println("[*]", "Starting container ...")
-			startOptions := types.ContainerStartOptions{
-				CheckpointID:  "",
-				CheckpointDir: "",
-			}
 			startTries = startTries - 1
-			err := cli.ContainerStart(ctx, response.ID, startOptions)
-			if err != nil {
-				log.Panicln("[!]", err)
-			} else {
-				log.Println("[*]", "Successfully started container.")
-			}
+			startContainer(ctx, cli, response.ID)
 		}
 	}
 

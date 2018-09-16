@@ -100,7 +100,7 @@ loop:
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		if id, pid := startContainer(ctx, cli,
+		if id, pid := runContainer(ctx, cli,
 			flags.containerName, flags.startTries, flags.checkTries,
 			flags.usePID, flags.useCGroup, flags.notifySD); len(id) > 0 && pid > 0 {
 
