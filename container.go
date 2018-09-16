@@ -38,6 +38,36 @@ func createClient() *client.Client {
 	return cli
 }
 
+func checkContainer(ctx context.Context, cli *client.Client, response types.ContainerJSON,
+	usePID bool, useCGroup bool) bool {
+
+	if usePID {
+		log.Println("[*]", "Checking for PID existence ...")
+		if checkProcess(response.State.Pid) {
+			if useCGroup {
+				log.Println("[*]", "Checking for PID existence in CGroup ...")
+				cgroup := fmt.Sprintf(dockerCGroupFormat, response.ID)
+				if checkCGroup(response.State.Pid, cgroup) {
+					log.Println("[*]", "Successfully checked for PID existence in CGroup.")
+					return true
+				} else {
+					log.Println("[*]", "Failed to check for PID existence in CGroup.")
+					return false
+				}
+			} else {
+				log.Println("[*]", "Successfully checked for PID existence, but skipped CGroup.")
+				return true
+			}
+		} else {
+			log.Println("[*]", "Failed to check for PID existence.")
+			return false
+		}
+	} else {
+		log.Println("[i]", "Skipped check for PID existence.")
+		return true
+	}
+}
+
 func startContainer(ctx context.Context, cli *client.Client, containerName string,
 	startTries int, checkTries int, usePID bool, useCGroup bool, notifySD bool) (string, int) {
 
@@ -63,45 +93,16 @@ started:
 
 		if response.State.Status == "running" {
 			log.Println("[*]", "Container is running.")
-			if usePID {
-				log.Println("[*]", "Checking for PID existence ...")
-				checkTries = checkTries - 1
-				if checkProcess(response.State.Pid) {
-					if useCGroup {
-						log.Println("[*]", "Checking for PID existence in CGroup ...")
-						cgroup := fmt.Sprintf(dockerCGroupFormat, response.ID)
-						if checkCGroup(response.State.Pid, cgroup) {
-							containerID = response.ID
-							containerPID = response.State.Pid
-							log.Println("[*]", "Successfully checked for PID existence in CGroup.")
-							break started
-						} else {
-							log.Println("[*]", "Failed to check for PID existence in CGroup.")
-							if checkTries == 0 {
-								break started
-							} else {
-								continue started
-							}
-						}
-					} else {
-						containerID = response.ID
-						containerPID = response.State.Pid
-						log.Println("[*]", "Successfully checked for PID existence, but skipped CGroup.")
-						break started
-					}
-				} else {
-					log.Println("[*]", "Failed to check for PID existence.")
-					if checkTries == 0 {
-						break started
-					} else {
-						continue started
-					}
-				}
-			} else {
+			log.Println("[*]", "Checking container ...")
+			checkTries = checkTries - 1
+			if checkContainer(ctx, cli, response, usePID, useCGroup) {
 				containerID = response.ID
 				containerPID = response.State.Pid
-				log.Println("[i]", "Skipped check for PID existence.")
 				break started
+			} else if checkTries == 0 {
+				break started
+			} else {
+				continue started
 			}
 		} else if startTries == 0 {
 			log.Panicln("[!]", "Could not start container!")
