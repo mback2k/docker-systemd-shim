@@ -30,10 +30,11 @@ import (
 )
 
 type flags struct {
-	containerID   string
+	containerName string
 	startTries    int
 	checkTries    int
 	usePID        bool
+	useCGroup     bool
 	notifySD      bool
 	stopOnSIGTERM bool
 	stopTimeout   string
@@ -42,7 +43,7 @@ type flags struct {
 func parseFlags(flags *flags) {
 	log.SetFlags(log.Ldate | log.Ltime)
 
-	flag.StringVar(&((*flags).containerID), "container", "", "Name or ID of container")
+	flag.StringVar(&((*flags).containerName), "container", "", "Name or ID of container")
 	flag.IntVar(&((*flags).startTries), "startTries", 3, "Number of tries to start the container if it is stopped")
 	flag.IntVar(&((*flags).checkTries), "checkTries", 3, "Number of tries to check the container if it is running")
 	flag.BoolVar(&((*flags).usePID), "usePID", true, "Check existence of process via container PID")
@@ -51,11 +52,11 @@ func parseFlags(flags *flags) {
 	flag.StringVar(&((*flags).stopTimeout), "stopTimeout", "", "Timeout before the container is gracefully killed")
 	flag.Parse()
 
-	if len((*flags).containerID) == 0 {
-		log.Panicln("[!]", "Name or containerID is missing!")
+	if len((*flags).containerName) == 0 {
+		log.Panicln("[!]", "Name or ID of container is missing!")
 	}
 
-	log.Println("[i]", "Provided container name or ID:", (*flags).containerID)
+	log.Println("[i]", "Provided container name or ID:", (*flags).containerName)
 }
 
 func handleSignals(ctx context.Context, stop chan<- bool, flags flags) {
@@ -91,13 +92,13 @@ loop:
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		if pid := startContainer(ctx, cli, flags.containerID,
+		if pid := startContainer(ctx, cli, flags.containerName,
 			flags.startTries, flags.checkTries, flags.usePID, flags.notifySD); pid > 0 {
 
 			var container <-chan bool
 			var process <-chan bool
 
-			container = watchContainer(ctx, cli, flags.containerID)
+			container = watchContainer(ctx, cli, flags.containerName)
 			if flags.usePID {
 				process = watchProcess(ctx, pid)
 			} else {
@@ -134,7 +135,7 @@ loop:
 					if flags.notifySD {
 						daemon.SdNotify(false, daemon.SdNotifyStopping)
 					}
-					stopContainer(ctx, cli, flags.containerID, flags.stopTimeout)
+					stopContainer(ctx, cli, flags.containerName, flags.stopTimeout)
 					break loop
 				}
 			}

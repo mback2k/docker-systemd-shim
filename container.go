@@ -37,7 +37,7 @@ func createClient() *client.Client {
 	return cli
 }
 
-func startContainer(ctx context.Context, cli *client.Client, containerID string,
+func startContainer(ctx context.Context, cli *client.Client, containerName string,
 	startTries int, checkTries int, usePID bool, notifySD bool) int {
 
 	var containerPID = 0
@@ -45,7 +45,7 @@ func startContainer(ctx context.Context, cli *client.Client, containerID string,
 started:
 	for {
 		log.Println("[*]", "Inspecting container ...")
-		response, err := cli.ContainerInspect(ctx, containerID)
+		response, err := cli.ContainerInspect(ctx, containerName)
 		if err != nil {
 			log.Panicln("[!]", err)
 		} else {
@@ -103,11 +103,11 @@ started:
 	return containerPID
 }
 
-func watchContainer(ctx context.Context, cli *client.Client, containerID string) <-chan bool {
+func watchContainer(ctx context.Context, cli *client.Client, containerName string) <-chan bool {
 	stopped := make(chan bool)
 
 	go func() {
-		waits, errs := cli.ContainerWait(ctx, containerID, container.WaitConditionNotRunning)
+		waits, errs := cli.ContainerWait(ctx, containerName, container.WaitConditionNotRunning)
 
 	waited:
 		for {
@@ -140,7 +140,7 @@ func watchContainer(ctx context.Context, cli *client.Client, containerID string)
 	return stopped
 }
 
-func stopContainer(ctx context.Context, cli *client.Client, containerID string,
+func stopContainer(ctx context.Context, cli *client.Client, containerName string,
 	stopTimeout string) {
 
 	var timeout time.Duration
@@ -154,7 +154,7 @@ func stopContainer(ctx context.Context, cli *client.Client, containerID string,
 	}
 
 	log.Println("[*]", "Stopping container ...")
-	err := cli.ContainerStop(ctx, containerID, &timeout)
+	err := cli.ContainerStop(ctx, containerName, &timeout)
 	if err != nil {
 		log.Panicln("[!]", err)
 	} else {
