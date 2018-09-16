@@ -21,6 +21,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -40,6 +41,8 @@ type flags struct {
 	stopTimeout   string
 }
 
+const dockerCGroupFormat = "/docker/%s/"
+
 func parseFlags(flags *flags) {
 	log.SetFlags(log.Ldate | log.Ltime)
 
@@ -47,6 +50,7 @@ func parseFlags(flags *flags) {
 	flag.IntVar(&((*flags).startTries), "startTries", 3, "Number of tries to start the container if it is stopped")
 	flag.IntVar(&((*flags).checkTries), "checkTries", 3, "Number of tries to check the container if it is running")
 	flag.BoolVar(&((*flags).usePID), "usePID", true, "Check existence of process via container PID")
+	flag.BoolVar(&((*flags).useCGroup), "useCGroup", true, "Check existence of process via container CGroup")
 	flag.BoolVar(&((*flags).notifySD), "notifySD", true, "Notify systemd about service state changes")
 	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true, "Stop the container on system signal SIGTERM")
 	flag.StringVar(&((*flags).stopTimeout), "stopTimeout", "", "Timeout before the container is gracefully killed")
@@ -54,6 +58,10 @@ func parseFlags(flags *flags) {
 
 	if len((*flags).containerName) == 0 {
 		log.Panicln("[!]", "Name or ID of container is missing!")
+	}
+
+	if !(*flags).usePID && (*flags).useCGroup {
+		log.Panicln("[!]", "Flag useCGroup depends upon flag usePID!")
 	}
 
 	log.Println("[i]", "Provided container name or ID:", (*flags).containerName)
@@ -92,15 +100,21 @@ loop:
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		if pid := startContainer(ctx, cli, flags.containerName,
-			flags.startTries, flags.checkTries, flags.usePID, flags.notifySD); pid > 0 {
+		if id, pid := startContainer(ctx, cli,
+			flags.containerName, flags.startTries, flags.checkTries,
+			flags.usePID, flags.useCGroup, flags.notifySD); len(id) > 0 && pid > 0 {
 
 			var container <-chan bool
 			var process <-chan bool
 
 			container = watchContainer(ctx, cli, flags.containerName)
 			if flags.usePID {
-				process = watchProcess(ctx, pid)
+				if flags.useCGroup {
+					cgroup := fmt.Sprintf(dockerCGroupFormat, id)
+					process = watchProcess(ctx, pid, cgroup)
+				} else {
+					process = watchProcess(ctx, pid, "")
+				}
 			} else {
 				process = make(chan bool)
 			}

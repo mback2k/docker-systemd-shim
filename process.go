@@ -21,8 +21,11 @@ package main
 import (
 	"context"
 	"os"
+	"strings"
 	"syscall"
 	"time"
+
+	"github.com/containerd/cgroups"
 )
 
 func checkProcess(pid int) bool {
@@ -36,7 +39,28 @@ func checkProcess(pid int) bool {
 	return false
 }
 
-func watchProcess(ctx context.Context, pid int) <-chan bool {
+func checkCGroup(pid int, cgroup string) bool {
+	control, err := cgroups.Load(cgroups.V1, cgroups.StaticPath(cgroup))
+	if err == nil {
+		subsystems := control.Subsystems()
+		for si := 0; si < len(subsystems); si++ {
+			subsystem := subsystems[si]
+			processes, err := control.Processes(subsystem.Name(), false)
+			if err == nil {
+				for pi := 0; pi < len(processes); pi++ {
+					process := processes[pi]
+					if process.Pid == pid && !strings.HasSuffix(process.Path, cgroup) {
+						return false
+					}
+				}
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func watchProcess(ctx context.Context, pid int, cgroup string) <-chan bool {
 	stopped := make(chan bool)
 
 	go func() {
@@ -51,6 +75,10 @@ func watchProcess(ctx context.Context, pid int) <-chan bool {
 				break loop
 			case <-ticker.C:
 				if !checkProcess(pid) {
+					stopped <- true
+					break loop
+				}
+				if len(cgroup) > 0 && !checkCGroup(pid, cgroup) {
 					stopped <- true
 					break loop
 				}

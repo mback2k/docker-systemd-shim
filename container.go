@@ -20,6 +20,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -38,8 +39,9 @@ func createClient() *client.Client {
 }
 
 func startContainer(ctx context.Context, cli *client.Client, containerName string,
-	startTries int, checkTries int, usePID bool, notifySD bool) int {
+	startTries int, checkTries int, usePID bool, useCGroup bool, notifySD bool) (string, int) {
 
+	var containerID = ""
 	var containerPID = 0
 
 started:
@@ -65,9 +67,28 @@ started:
 				log.Println("[*]", "Checking for PID existence ...")
 				checkTries = checkTries - 1
 				if checkProcess(response.State.Pid) {
-					containerPID = response.State.Pid
-					log.Println("[*]", "Successfully checked for PID existence.")
-					break started
+					if useCGroup {
+						log.Println("[*]", "Checking for PID existence in CGroup ...")
+						cgroup := fmt.Sprintf(dockerCGroupFormat, response.ID)
+						if checkCGroup(response.State.Pid, cgroup) {
+							containerID = response.ID
+							containerPID = response.State.Pid
+							log.Println("[*]", "Successfully checked for PID existence in CGroup.")
+							break started
+						} else {
+							log.Println("[*]", "Failed to check for PID existence in CGroup.")
+							if checkTries == 0 {
+								break started
+							} else {
+								continue started
+							}
+						}
+					} else {
+						containerID = response.ID
+						containerPID = response.State.Pid
+						log.Println("[*]", "Successfully checked for PID existence, but skipped CGroup.")
+						break started
+					}
 				} else {
 					log.Println("[*]", "Failed to check for PID existence.")
 					if checkTries == 0 {
@@ -77,6 +98,7 @@ started:
 					}
 				}
 			} else {
+				containerID = response.ID
 				containerPID = response.State.Pid
 				log.Println("[i]", "Skipped check for PID existence.")
 				break started
@@ -100,7 +122,7 @@ started:
 		}
 	}
 
-	return containerPID
+	return containerID, containerPID
 }
 
 func watchContainer(ctx context.Context, cli *client.Client, containerName string) <-chan bool {
