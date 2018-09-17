@@ -30,6 +30,12 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 )
 
+const dockerCGroupFormat = "/docker/%s/"
+const dockerHostEnv = "DOCKER_HOST"
+const dockerAPIVersionEnv = "DOCKER_API_VERSION"
+const dockerCertPathEnv = "DOCKER_CERT_PATH"
+const dockerTLSVerifyEnv = "DOCKER_TLS_VERIFY"
+
 type dockerFlags struct {
 	host       string
 	apiVersion string
@@ -49,12 +55,6 @@ type flags struct {
 	stopTimeout   string
 	dockerFlags   dockerFlags
 }
-
-const dockerCGroupFormat = "/docker/%s/"
-const dockerHostEnv = "DOCKER_HOST"
-const dockerAPIVersionEnv = "DOCKER_API_VERSION"
-const dockerCertPathEnv = "DOCKER_CERT_PATH"
-const dockerTLSVerifyEnv = "DOCKER_TLS_VERIFY"
 
 func parseFlags(flags *flags) {
 	log.SetFlags(log.Ldate | log.Ltime)
