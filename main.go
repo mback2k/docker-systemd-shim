@@ -96,7 +96,7 @@ func parseFlags(flags *flags) {
 	if os.Getenv(dockerCertPathEnv) != (*flags).dockerFlags.certPath {
 		os.Setenv(dockerCertPathEnv, (*flags).dockerFlags.certPath)
 	}
-	if (os.Getenv(dockerTLSVerifyEnv) != "") != (*flags).dockerFlags.tlsVerify {
+	if (*flags).dockerFlags.tlsVerify {
 		os.Setenv(dockerTLSVerifyEnv, "true")
 	} else {
 		os.Unsetenv(dockerTLSVerifyEnv)
