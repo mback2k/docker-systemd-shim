@@ -37,6 +37,7 @@ type flags struct {
 	usePID        bool
 	useCGroup     bool
 	notifySD      bool
+	stopOnSIGINT  bool
 	stopOnSIGTERM bool
 	stopTimeout   string
 }
@@ -52,7 +53,8 @@ func parseFlags(flags *flags) {
 	flag.BoolVar(&((*flags).usePID), "usePID", true, "Check existence of process via container PID")
 	flag.BoolVar(&((*flags).useCGroup), "useCGroup", true, "Check existence of process via container CGroup")
 	flag.BoolVar(&((*flags).notifySD), "notifySD", true, "Notify systemd about service state changes")
-	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true, "Stop the container on system signal SIGTERM")
+	flag.BoolVar(&((*flags).stopOnSIGINT), "stopOnSIGINT", false, "Stop the container on receiving signal SIGINT")
+	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true, "Stop the container on receiving signal SIGTERM")
 	flag.StringVar(&((*flags).stopTimeout), "stopTimeout", "", "Timeout before the container is gracefully killed")
 	flag.Parse()
 
@@ -80,7 +82,10 @@ func handleSignals(ctx context.Context, stop chan<- bool, flags flags) {
 				// returning not to leak the goroutine
 				break loop
 			case sig := <-sigs:
-				if sig == syscall.SIGTERM {
+				switch sig {
+				case syscall.SIGINT:
+					stop <- flags.stopOnSIGINT
+				case syscall.SIGTERM:
 					stop <- flags.stopOnSIGTERM
 				}
 			}
