@@ -46,6 +46,7 @@ type dockerFlags struct {
 const containerNameEnv = "CONTAINER"
 const startTriesEnv = "START_TRIES"
 const checkTriesEnv = "CHECK_TRIES"
+const checkIntervalEnv = "CHECK_INTERVAL"
 const usePIDEnv = "USE_PID"
 const useCGroupEnv = "USE_CGROUP"
 const notifySDEnv = "NOTIFY_SD"
@@ -57,6 +58,7 @@ type flags struct {
 	containerName string
 	startTries    int
 	checkTries    int
+	checkInterval int
 	usePID        bool
 	useCGroup     bool
 	notifySD      bool
@@ -72,6 +74,7 @@ func parseFlags(flags *flags) {
 	flag.StringVar(&((*flags).containerName), "container", "", "Name or ID of container")
 	flag.IntVar(&((*flags).startTries), "startTries", 3, "Number of tries to start the container if it is stopped")
 	flag.IntVar(&((*flags).checkTries), "checkTries", 3, "Number of tries to check the container if it is running")
+	flag.IntVar(&((*flags).checkInterval), "checkInterval", 500, "Number of milliseconds between each container check")
 	flag.BoolVar(&((*flags).usePID), "usePID", true, "Check existence of process via container PID")
 	flag.BoolVar(&((*flags).useCGroup), "useCGroup", true, "Check existence of process via container CGroup")
 	flag.BoolVar(&((*flags).notifySD), "notifySD", true, "Notify systemd about service state changes")
@@ -87,6 +90,9 @@ func parseFlags(flags *flags) {
 	}
 	if value, ok := os.LookupEnv(checkTriesEnv); ok {
 		flag.Set("checkTries", value)
+	}
+	if value, ok := os.LookupEnv(checkIntervalEnv); ok {
+		flag.Set("checkInterval", value)
 	}
 	if value, ok := os.LookupEnv(usePIDEnv); ok {
 		flag.Set("usePID", value)
@@ -190,9 +196,9 @@ loop:
 			if flags.usePID {
 				if flags.useCGroup {
 					cgroup := fmt.Sprintf(dockerCGroupFormat, id)
-					process = watchProcess(ctx, pid, cgroup)
+					process = watchProcess(ctx, pid, cgroup, flags.checkInterval)
 				} else {
-					process = watchProcess(ctx, pid, "")
+					process = watchProcess(ctx, pid, "", flags.checkInterval)
 				}
 			} else {
 				process = make(chan bool)
