@@ -30,6 +30,13 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 )
 
+type dockerFlags struct {
+	host       string
+	apiVersion string
+	certPath   string
+	tlsVerify  bool
+}
+
 type flags struct {
 	containerName string
 	startTries    int
@@ -40,9 +47,14 @@ type flags struct {
 	stopOnSIGINT  bool
 	stopOnSIGTERM bool
 	stopTimeout   string
+	dockerFlags   dockerFlags
 }
 
 const dockerCGroupFormat = "/docker/%s/"
+const dockerHostEnv = "DOCKER_HOST"
+const dockerAPIVersionEnv = "DOCKER_API_VERSION"
+const dockerCertPathEnv = "DOCKER_CERT_PATH"
+const dockerTLSVerifyEnv = "DOCKER_TLS_VERIFY"
 
 func parseFlags(flags *flags) {
 	log.SetFlags(log.Ldate | log.Ltime)
@@ -56,14 +68,38 @@ func parseFlags(flags *flags) {
 	flag.BoolVar(&((*flags).stopOnSIGINT), "stopOnSIGINT", false, "Stop the container on receiving signal SIGINT")
 	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true, "Stop the container on receiving signal SIGTERM")
 	flag.StringVar(&((*flags).stopTimeout), "stopTimeout", "", "Timeout before the container is gracefully killed")
+
+	flag.StringVar(&((*flags).dockerFlags.host), "dockerHost", os.Getenv(dockerHostEnv),
+		"Set the URL to the docker server, leave empty for default")
+	flag.StringVar(&((*flags).dockerFlags.apiVersion), "dockerAPIVersion", os.Getenv(dockerAPIVersionEnv),
+		"Set the version of the API to reach, leave empty for default")
+	flag.StringVar(&((*flags).dockerFlags.certPath), "dockerCertPath", os.Getenv(dockerCertPathEnv),
+		"Set the path to load the TLS certificates from, leave empty for default")
+	flag.BoolVar(&((*flags).dockerFlags.tlsVerify), "dockerTLSVerify", os.Getenv(dockerTLSVerifyEnv) != "",
+		"Enable or disable TLS verification, off by default")
+
 	flag.Parse()
 
 	if len((*flags).containerName) == 0 {
 		log.Panicln("[!]", "Name or ID of container is missing!")
 	}
-
 	if !(*flags).usePID && (*flags).useCGroup {
 		log.Panicln("[!]", "Flag useCGroup depends upon flag usePID!")
+	}
+
+	if os.Getenv(dockerHostEnv) != (*flags).dockerFlags.host {
+		os.Setenv(dockerHostEnv, (*flags).dockerFlags.host)
+	}
+	if os.Getenv(dockerAPIVersionEnv) != (*flags).dockerFlags.apiVersion {
+		os.Setenv(dockerAPIVersionEnv, (*flags).dockerFlags.apiVersion)
+	}
+	if os.Getenv(dockerCertPathEnv) != (*flags).dockerFlags.certPath {
+		os.Setenv(dockerCertPathEnv, (*flags).dockerFlags.certPath)
+	}
+	if (os.Getenv(dockerTLSVerifyEnv) != "") != (*flags).dockerFlags.tlsVerify {
+		os.Setenv(dockerTLSVerifyEnv, "true")
+	} else {
+		os.Unsetenv(dockerTLSVerifyEnv)
 	}
 
 	log.Println("[i]", "Provided container name or ID:", (*flags).containerName)
