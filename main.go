@@ -43,6 +43,16 @@ type dockerFlags struct {
 	tlsVerify  bool
 }
 
+const containerNameEnv = "CONTAINER"
+const startTriesEnv = "START_TRIES"
+const checkTriesEnv = "CHECK_TRIES"
+const usePIDEnv = "USE_PID"
+const useCGroupEnv = "USE_CGROUP"
+const notifySDEnv = "NOTIFY_SD"
+const stopOnSIGINTEnv = "STOP_ON_SIGINT"
+const stopOnSIGTERMEnv = "STOP_ON_SIGTERM"
+const stopTimeoutEnv = "STOP_TIMEOUT"
+
 type flags struct {
 	containerName string
 	startTries    int
@@ -68,6 +78,34 @@ func parseFlags(flags *flags) {
 	flag.BoolVar(&((*flags).stopOnSIGINT), "stopOnSIGINT", false, "Stop the container on receiving signal SIGINT")
 	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true, "Stop the container on receiving signal SIGTERM")
 	flag.StringVar(&((*flags).stopTimeout), "stopTimeout", "", "Timeout before the container is gracefully killed")
+
+	if value, ok := os.LookupEnv(containerNameEnv); ok {
+		flag.Set("container", value)
+	}
+	if value, ok := os.LookupEnv(startTriesEnv); ok {
+		flag.Set("startTries", value)
+	}
+	if value, ok := os.LookupEnv(checkTriesEnv); ok {
+		flag.Set("checkTries", value)
+	}
+	if value, ok := os.LookupEnv(usePIDEnv); ok {
+		flag.Set("usePID", value)
+	}
+	if value, ok := os.LookupEnv(useCGroupEnv); ok {
+		flag.Set("useCGroup", value)
+	}
+	if value, ok := os.LookupEnv(notifySDEnv); ok {
+		flag.Set("notifySD", value)
+	}
+	if value, ok := os.LookupEnv(stopOnSIGINTEnv); ok {
+		flag.Set("stopOnSIGINT", value)
+	}
+	if value, ok := os.LookupEnv(stopOnSIGTERMEnv); ok {
+		flag.Set("stopOnSIGTERM", value)
+	}
+	if value, ok := os.LookupEnv(stopTimeoutEnv); ok {
+		flag.Set("stopTimeout", value)
+	}
 
 	flag.StringVar(&((*flags).dockerFlags.host), "dockerHost", os.Getenv(dockerHostEnv),
 		"Set the URL to the docker server, leave empty for default")
