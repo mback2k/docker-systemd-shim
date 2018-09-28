@@ -112,7 +112,7 @@ started:
 			if err != nil {
 				log.Panicln(logError, err)
 			} else if res {
-				log.Println(logNotice, "Reported status to systemd: ", containerStatus)
+				log.Println(logNotice, "Reported status to systemd:", containerStatus)
 			} else {
 				log.Println(logError, "Reporting status to systemd is not supported.")
 			}
