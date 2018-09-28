@@ -30,11 +30,13 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 )
 
-const dockerCGroupFormat = "/docker/%s/"
-const dockerHostEnv = "DOCKER_HOST"
-const dockerAPIVersionEnv = "DOCKER_API_VERSION"
-const dockerCertPathEnv = "DOCKER_CERT_PATH"
-const dockerTLSVerifyEnv = "DOCKER_TLS_VERIFY"
+const (
+	dockerCGroupFormat  = "/docker/%s/"
+	dockerHostEnv       = "DOCKER_HOST"
+	dockerAPIVersionEnv = "DOCKER_API_VERSION"
+	dockerCertPathEnv   = "DOCKER_CERT_PATH"
+	dockerTLSVerifyEnv  = "DOCKER_TLS_VERIFY"
+)
 
 type dockerFlags struct {
 	host       string
@@ -43,16 +45,18 @@ type dockerFlags struct {
 	tlsVerify  bool
 }
 
-const containerNameEnv = "CONTAINER"
-const startTriesEnv = "START_TRIES"
-const checkTriesEnv = "CHECK_TRIES"
-const checkIntervalEnv = "CHECK_INTERVAL"
-const usePIDEnv = "USE_PID"
-const useCGroupEnv = "USE_CGROUP"
-const notifySDEnv = "NOTIFY_SD"
-const stopOnSIGINTEnv = "STOP_ON_SIGINT"
-const stopOnSIGTERMEnv = "STOP_ON_SIGTERM"
-const stopTimeoutEnv = "STOP_TIMEOUT"
+const (
+	containerNameEnv = "CONTAINER"
+	startTriesEnv    = "START_TRIES"
+	checkTriesEnv    = "CHECK_TRIES"
+	checkIntervalEnv = "CHECK_INTERVAL"
+	usePIDEnv        = "USE_PID"
+	useCGroupEnv     = "USE_CGROUP"
+	notifySDEnv      = "NOTIFY_SD"
+	stopOnSIGINTEnv  = "STOP_ON_SIGINT"
+	stopOnSIGTERMEnv = "STOP_ON_SIGTERM"
+	stopTimeoutEnv   = "STOP_TIMEOUT"
+)
 
 type flags struct {
 	containerName string
