@@ -31,6 +31,12 @@ import (
 )
 
 const (
+	logInfo   = "[i]"
+	logNotice = "[*]"
+	logError  = "[!]"
+)
+
+const (
 	dockerCGroupFormat  = "/docker/%s/"
 	dockerHostEnv       = "DOCKER_HOST"
 	dockerAPIVersionEnv = "DOCKER_API_VERSION"
@@ -129,10 +135,10 @@ func parseFlags(flags *flags) {
 	flag.Parse()
 
 	if len((*flags).containerName) == 0 {
-		log.Panicln("[!]", "Name or ID of container is missing!")
+		log.Panicln(logError, "Name or ID of container is missing!")
 	}
 	if !(*flags).usePID && (*flags).useCGroup {
-		log.Panicln("[!]", "Flag useCGroup depends upon flag usePID!")
+		log.Panicln(logError, "Flag useCGroup depends upon flag usePID!")
 	}
 
 	if os.Getenv(dockerHostEnv) != (*flags).dockerFlags.host {
@@ -150,7 +156,7 @@ func parseFlags(flags *flags) {
 		os.Unsetenv(dockerTLSVerifyEnv)
 	}
 
-	log.Println("[i]", "Provided container name or ID:", (*flags).containerName)
+	log.Println(logInfo, "Provided container name or ID:", (*flags).containerName)
 }
 
 func handleSignals(ctx context.Context, stop chan<- bool, flags flags) {
@@ -218,7 +224,7 @@ loop:
 				break loop
 			case container := <-container:
 				if container {
-					log.Println("[*]", "Container has stopped (notified via docker) and will be restarted.")
+					log.Println(logNotice, "Container has stopped (notified via docker) and will be restarted.")
 					if flags.notifySD {
 						daemon.SdNotify(false, daemon.SdNotifyReloading)
 					}
@@ -226,7 +232,7 @@ loop:
 				}
 			case process := <-process:
 				if process {
-					log.Println("[*]", "Container has stopped (notified via ticker) and will be restarted.")
+					log.Println(logNotice, "Container has stopped (notified via ticker) and will be restarted.")
 					if flags.notifySD {
 						daemon.SdNotify(false, daemon.SdNotifyReloading)
 					}
@@ -234,7 +240,7 @@ loop:
 				}
 			case stop := <-stop:
 				if stop {
-					log.Println("[*]", "Container will be stopped due to system signal.")
+					log.Println(logNotice, "Container will be stopped due to system signal.")
 					if flags.notifySD {
 						daemon.SdNotify(false, daemon.SdNotifyStopping)
 					}

@@ -33,7 +33,7 @@ import (
 func createClient() *client.Client {
 	cli, err := client.NewEnvClient()
 	if err != nil {
-		log.Panicln("[!]", err)
+		log.Panicln(logError, err)
 	}
 	return cli
 }
@@ -42,28 +42,28 @@ func checkContainer(ctx context.Context, cli *client.Client, response types.Cont
 	usePID bool, useCGroup bool) bool {
 
 	if usePID {
-		log.Println("[*]", "Checking for PID existence ...")
+		log.Println(logNotice, "Checking for PID existence ...")
 		if checkProcess(response.State.Pid) {
 			if useCGroup {
-				log.Println("[*]", "Checking for PID existence in CGroup ...")
+				log.Println(logNotice, "Checking for PID existence in CGroup ...")
 				cgroup := fmt.Sprintf(dockerCGroupFormat, response.ID)
 				if checkCGroup(response.State.Pid, cgroup) {
-					log.Println("[*]", "Successfully checked for PID existence in CGroup.")
+					log.Println(logNotice, "Successfully checked for PID existence in CGroup.")
 					return true
 				} else {
-					log.Println("[*]", "Failed to check for PID existence in CGroup.")
+					log.Println(logNotice, "Failed to check for PID existence in CGroup.")
 					return false
 				}
 			} else {
-				log.Println("[*]", "Successfully checked for PID existence, but skipped CGroup.")
+				log.Println(logNotice, "Successfully checked for PID existence, but skipped CGroup.")
 				return true
 			}
 		} else {
-			log.Println("[*]", "Failed to check for PID existence.")
+			log.Println(logNotice, "Failed to check for PID existence.")
 			return false
 		}
 	} else {
-		log.Println("[i]", "Skipped check for PID existence.")
+		log.Println(logInfo, "Skipped check for PID existence.")
 		return true
 	}
 }
@@ -75,10 +75,10 @@ func startContainer(ctx context.Context, cli *client.Client, containerName strin
 	}
 	err := cli.ContainerStart(ctx, containerName, startOptions)
 	if err != nil {
-		log.Println("[!]", err)
+		log.Println(logError, err)
 		return false
 	} else {
-		log.Println("[*]", "Successfully started container.")
+		log.Println(logNotice, "Successfully started container.")
 		return true
 	}
 }
@@ -91,15 +91,15 @@ func runContainer(ctx context.Context, cli *client.Client, containerName string,
 
 started:
 	for {
-		log.Println("[*]", "Inspecting container ...")
+		log.Println(logNotice, "Inspecting container ...")
 		response, err := cli.ContainerInspect(ctx, containerName)
 		if err != nil {
-			log.Panicln("[!]", err)
+			log.Panicln(logError, err)
 		} else {
-			log.Println("[i]", "Container ID:", response.ID)
-			log.Println("[i]", "Container Name:", response.Name)
-			log.Println("[i]", "Container Status:", response.State.Status)
-			log.Println("[i]", "Container PID:", response.State.Pid)
+			log.Println(logInfo, "Container ID:", response.ID)
+			log.Println(logInfo, "Container Name:", response.Name)
+			log.Println(logInfo, "Container Status:", response.State.Status)
+			log.Println(logInfo, "Container PID:", response.State.Pid)
 		}
 
 		if notifySD {
@@ -107,20 +107,20 @@ started:
 			if response.State.Health != nil {
 				containerStatus += " [" + response.State.Health.Status + "]"
 			}
-			log.Println("[*]", "Reporting status to systemd ...")
+			log.Println(logNotice, "Reporting status to systemd ...")
 			res, err := daemon.SdNotify(false, "STATUS="+containerStatus)
 			if err != nil {
-				log.Panicln("[!]", err)
+				log.Panicln(logError, err)
 			} else if res {
-				log.Println("[*]", "Reported status to systemd: ", containerStatus)
+				log.Println(logNotice, "Reported status to systemd: ", containerStatus)
 			} else {
-				log.Println("[!]", "Reporting status to systemd is not supported.")
+				log.Println(logError, "Reporting status to systemd is not supported.")
 			}
 		}
 
 		if response.State.Status == "running" {
-			log.Println("[*]", "Container is running.")
-			log.Println("[*]", "Checking container ...")
+			log.Println(logNotice, "Container is running.")
+			log.Println(logNotice, "Checking container ...")
 			checkTries = checkTries - 1
 			if checkContainer(ctx, cli, response, usePID, useCGroup) {
 				containerID = response.ID
@@ -132,10 +132,10 @@ started:
 				continue started
 			}
 		} else if startTries == 0 {
-			log.Panicln("[!]", "Could not start container!")
+			log.Panicln(logError, "Could not start container!")
 			break started
 		} else {
-			log.Println("[*]", "Starting container ...")
+			log.Println(logNotice, "Starting container ...")
 			startTries = startTries - 1
 			startContainer(ctx, cli, response.ID)
 		}
@@ -158,17 +158,17 @@ func watchContainer(ctx context.Context, cli *client.Client, containerName strin
 				break waited
 			case err := <-errs:
 				if err != nil {
-					log.Panicln("[!]", err)
+					log.Panicln(logError, err)
 					stopped <- false
 				}
 				break waited
 			case w := <-waits:
 				if w.Error != nil {
-					log.Panicln("[!]", w.Error)
+					log.Panicln(logError, w.Error)
 					stopped <- false
 				} else {
-					log.Println("[i]", "Container exit code:", w.StatusCode)
-					log.Println("[*]", "Container has stopped.")
+					log.Println(logInfo, "Container exit code:", w.StatusCode)
+					log.Println(logNotice, "Container has stopped.")
 					stopped <- true
 				}
 				break waited
@@ -189,16 +189,16 @@ func stopContainer(ctx context.Context, cli *client.Client, containerName string
 	if len(stopTimeout) > 0 {
 		parsedTimeout, err := time.ParseDuration(stopTimeout)
 		if err != nil {
-			log.Panicln("[!]", err)
+			log.Panicln(logError, err)
 		}
 		timeout = parsedTimeout
 	}
 
-	log.Println("[*]", "Stopping container ...")
+	log.Println(logNotice, "Stopping container ...")
 	err := cli.ContainerStop(ctx, containerName, &timeout)
 	if err != nil {
-		log.Panicln("[!]", err)
+		log.Panicln(logError, err)
 	} else {
-		log.Println("[*]", "Successfully stopped container.")
+		log.Println(logNotice, "Successfully stopped container.")
 	}
 }
