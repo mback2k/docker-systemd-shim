@@ -103,7 +103,19 @@ started:
 		}
 
 		if notifySD {
-			daemon.SdNotify(false, "STATUS="+response.State.Status)
+			var containerStatus = response.State.Status
+			if response.State.Health != nil {
+				containerStatus += " [" + response.State.Health.Status + "]"
+			}
+			log.Println("[*]", "Reporting status to systemd ...")
+			res, err := daemon.SdNotify(false, "STATUS="+containerStatus)
+			if err != nil {
+				log.Panicln("[!]", err)
+			} else if res {
+				log.Println("[*]", "Reported status to systemd: ", containerStatus)
+			} else {
+				log.Println("[!]", "Reporting status to systemd is not supported.")
+			}
 		}
 
 		if response.State.Status == "running" {
