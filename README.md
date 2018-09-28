@@ -20,6 +20,10 @@ Requires=docker.service
 Type=notify
 ExecStart=/usr/local/sbin/docker-systemd-shim -container your-container-name
 Environment=DOCKER_API_VERSION=1.38
+Restart=on-failure
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
 
 [Install]
 WantedBy=docker.service
