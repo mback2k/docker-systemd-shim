@@ -18,7 +18,7 @@ Requires=docker.service
 
 [Service]
 Type=notify
-ExecStart=/usr/local/sbin/docker-systemd-shim --container=your-container-name
+ExecStart=/usr/local/sbin/docker-systemd-shim -container your-container-name
 Environment=DOCKER_API_VERSION=1.38
 
 [Install]
