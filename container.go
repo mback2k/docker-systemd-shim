@@ -110,7 +110,7 @@ started:
 			log.Println(logNotice, "Reporting status to systemd ...")
 			res, err := daemon.SdNotify(false, "STATUS="+containerStatus)
 			if err != nil {
-				log.Panicln(logError, err)
+				log.Println(logError, err)
 			} else if res {
 				log.Println(logNotice, "Reported status to systemd:", containerStatus)
 			} else {
@@ -132,7 +132,7 @@ started:
 				continue started
 			}
 		} else if startTries == 0 {
-			log.Panicln(logError, "Could not start container!")
+			log.Println(logError, "Could not start container!")
 			break started
 		} else {
 			log.Println(logNotice, "Starting container ...")
@@ -158,13 +158,13 @@ func watchContainer(ctx context.Context, cli *client.Client, containerName strin
 				break waited
 			case err := <-errs:
 				if err != nil {
-					log.Panicln(logError, err)
+					log.Println(logError, err)
 					stopped <- false
 				}
 				break waited
 			case w := <-waits:
 				if w.Error != nil {
-					log.Panicln(logError, w.Error)
+					log.Println(logError, w.Error)
 					stopped <- false
 				} else {
 					log.Println(logInfo, "Container exit code:", w.StatusCode)
@@ -189,7 +189,7 @@ func stopContainer(ctx context.Context, cli *client.Client, containerName string
 	if len(stopTimeout) > 0 {
 		parsedTimeout, err := time.ParseDuration(stopTimeout)
 		if err != nil {
-			log.Panicln(logError, err)
+			log.Println(logError, err)
 		}
 		timeout = parsedTimeout
 	}
@@ -197,7 +197,7 @@ func stopContainer(ctx context.Context, cli *client.Client, containerName string
 	log.Println(logNotice, "Stopping container ...")
 	err := cli.ContainerStop(ctx, containerName, &timeout)
 	if err != nil {
-		log.Panicln(logError, err)
+		log.Println(logError, err)
 	} else {
 		log.Println(logNotice, "Successfully stopped container.")
 	}
