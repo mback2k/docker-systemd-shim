@@ -60,11 +60,11 @@ func checkCGroup(pid int, cgroup string) bool {
 	return false
 }
 
-func watchProcess(ctx context.Context, pid int, cgroup string, interval int) <-chan bool {
+func watchProcess(ctx context.Context, pid int, cgroup string, interval time.Duration) <-chan bool {
 	stopped := make(chan bool)
 
 	go func() {
-		ticker := time.NewTicker(time.Millisecond * time.Duration(interval))
+		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
 	loop:

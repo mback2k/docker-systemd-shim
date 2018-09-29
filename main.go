@@ -69,7 +69,7 @@ type flags struct {
 	containerName string
 	startTries    int
 	checkTries    int
-	checkInterval int
+	checkInterval time.Duration
 	usePID        bool
 	useCGroup     bool
 	notifySD      bool
@@ -79,6 +79,7 @@ type flags struct {
 }
 
 func parseFlags(flags *flags) {
+	var checkInterval string
 	var stopTimeout string
 	var dockerFlags dockerFlags
 
@@ -87,7 +88,7 @@ func parseFlags(flags *flags) {
 	flag.StringVar(&((*flags).containerName), "container", "", "Name or ID of container")
 	flag.IntVar(&((*flags).startTries), "startTries", 3, "Number of tries to start the container if it is stopped")
 	flag.IntVar(&((*flags).checkTries), "checkTries", 3, "Number of tries to check the container if it is running")
-	flag.IntVar(&((*flags).checkInterval), "checkInterval", 500, "Number of milliseconds between each container check")
+	flag.StringVar(&checkInterval, "checkInterval", "500ms", "Interval delay between each container check")
 	flag.BoolVar(&((*flags).usePID), "usePID", true, "Check existence of process via container PID")
 	flag.BoolVar(&((*flags).useCGroup), "useCGroup", true, "Check existence of process via container CGroup")
 	flag.BoolVar(&((*flags).notifySD), "notifySD", true, "Notify systemd about service state changes")
@@ -144,6 +145,15 @@ func parseFlags(flags *flags) {
 		log.Panicln(logError, "Flag useCGroup depends upon flag usePID!")
 	}
 
+	if len(checkInterval) > 0 {
+		if parsedInterval, err := time.ParseDuration(checkInterval); err != nil {
+			log.Panicln(logError, "Flag checkInterval has invalid format!", err)
+		} else {
+			(*flags).checkInterval = parsedInterval
+		}
+	} else {
+		(*flags).checkInterval = time.Duration(time.Millisecond * 500)
+	}
 	if len(stopTimeout) > 0 {
 		if parsedTimeout, err := time.ParseDuration(stopTimeout); err != nil {
 			log.Panicln(logError, "Flag stopTimeout has invalid format!", err)
