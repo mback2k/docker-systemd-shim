@@ -76,11 +76,11 @@ type flags struct {
 	stopOnSIGINT  bool
 	stopOnSIGTERM bool
 	stopTimeout   time.Duration
-	dockerFlags   dockerFlags
 }
 
 func parseFlags(flags *flags) {
 	var stopTimeout string
+	var dockerFlags dockerFlags
 
 	log.SetFlags(log.Ldate | log.Ltime)
 
@@ -126,13 +126,13 @@ func parseFlags(flags *flags) {
 		flag.Set("stopTimeout", value)
 	}
 
-	flag.StringVar(&((*flags).dockerFlags.host), "dockerHost", os.Getenv(dockerHostEnv),
+	flag.StringVar(&dockerFlags.host, "dockerHost", os.Getenv(dockerHostEnv),
 		"Set the URL to the docker server, leave empty for default")
-	flag.StringVar(&((*flags).dockerFlags.apiVersion), "dockerAPIVersion", os.Getenv(dockerAPIVersionEnv),
+	flag.StringVar(&dockerFlags.apiVersion, "dockerAPIVersion", os.Getenv(dockerAPIVersionEnv),
 		"Set the version of the API to reach, leave empty for default")
-	flag.StringVar(&((*flags).dockerFlags.certPath), "dockerCertPath", os.Getenv(dockerCertPathEnv),
+	flag.StringVar(&dockerFlags.certPath, "dockerCertPath", os.Getenv(dockerCertPathEnv),
 		"Set the path to load the TLS certificates from, leave empty for default")
-	flag.BoolVar(&((*flags).dockerFlags.tlsVerify), "dockerTLSVerify", os.Getenv(dockerTLSVerifyEnv) != "",
+	flag.BoolVar(&dockerFlags.tlsVerify, "dockerTLSVerify", os.Getenv(dockerTLSVerifyEnv) != "",
 		"Enable or disable TLS verification, off by default")
 
 	flag.Parse()
@@ -152,16 +152,10 @@ func parseFlags(flags *flags) {
 		}
 	}
 
-	if os.Getenv(dockerHostEnv) != (*flags).dockerFlags.host {
-		os.Setenv(dockerHostEnv, (*flags).dockerFlags.host)
-	}
-	if os.Getenv(dockerAPIVersionEnv) != (*flags).dockerFlags.apiVersion {
-		os.Setenv(dockerAPIVersionEnv, (*flags).dockerFlags.apiVersion)
-	}
-	if os.Getenv(dockerCertPathEnv) != (*flags).dockerFlags.certPath {
-		os.Setenv(dockerCertPathEnv, (*flags).dockerFlags.certPath)
-	}
-	if (*flags).dockerFlags.tlsVerify {
+	os.Setenv(dockerHostEnv, dockerFlags.host)
+	os.Setenv(dockerAPIVersionEnv, dockerFlags.apiVersion)
+	os.Setenv(dockerCertPathEnv, dockerFlags.certPath)
+	if dockerFlags.tlsVerify {
 		os.Setenv(dockerTLSVerifyEnv, "true")
 	} else {
 		os.Unsetenv(dockerTLSVerifyEnv)
