@@ -41,6 +41,7 @@ func createClient() *client.Client {
 func checkContainer(ctx context.Context, cli *client.Client, response types.ContainerJSON,
 	usePID bool, useCGroup bool) bool {
 
+	log.Println(logNotice, "Checking container ...")
 	if usePID {
 		log.Println(logNotice, "Checking for PID existence ...")
 		if checkProcess(response.State.Pid) {
@@ -73,6 +74,7 @@ func startContainer(ctx context.Context, cli *client.Client, containerName strin
 		CheckpointID:  "",
 		CheckpointDir: "",
 	}
+	log.Println(logNotice, "Starting container ...")
 	err := cli.ContainerStart(ctx, containerName, startOptions)
 	if err != nil {
 		log.Println(logError, err)
@@ -120,7 +122,6 @@ started:
 
 		if response.State.Status == "running" {
 			log.Println(logNotice, "Container is running.")
-			log.Println(logNotice, "Checking container ...")
 			checkTries = checkTries - 1
 			if checkContainer(ctx, cli, response, usePID, useCGroup) {
 				containerID = response.ID
@@ -135,7 +136,6 @@ started:
 			log.Println(logError, "Could not start container!")
 			break started
 		} else {
-			log.Println(logNotice, "Starting container ...")
 			startTries = startTries - 1
 			startContainer(ctx, cli, response.ID)
 		}
