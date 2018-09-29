@@ -61,3 +61,12 @@ This tool can only control previously created and already existing docker contai
 
 I personally use this tool to manage pre-requisite containers for my Docker Swarm
 cluster, for example ndppd and tinc running inside containers managed via Ansible.
+
+License
+-------
+Copyright (C) 2018  Marc Hoersken <info@marc-hoersken.de>
+
+This software is licensed as described in the file LICENSE, which
+you should have received as part of this software distribution.
+
+All trademarks are the property of their respective owners.
