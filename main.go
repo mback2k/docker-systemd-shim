@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/coreos/go-systemd/daemon"
 )
@@ -74,11 +75,13 @@ type flags struct {
 	notifySD      bool
 	stopOnSIGINT  bool
 	stopOnSIGTERM bool
-	stopTimeout   string
+	stopTimeout   time.Duration
 	dockerFlags   dockerFlags
 }
 
 func parseFlags(flags *flags) {
+	var stopTimeout string
+
 	log.SetFlags(log.Ldate | log.Ltime)
 
 	flag.StringVar(&((*flags).containerName), "container", "", "Name or ID of container")
@@ -90,7 +93,7 @@ func parseFlags(flags *flags) {
 	flag.BoolVar(&((*flags).notifySD), "notifySD", true, "Notify systemd about service state changes")
 	flag.BoolVar(&((*flags).stopOnSIGINT), "stopOnSIGINT", false, "Stop the container on receiving signal SIGINT")
 	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true, "Stop the container on receiving signal SIGTERM")
-	flag.StringVar(&((*flags).stopTimeout), "stopTimeout", "", "Timeout before the container is gracefully killed")
+	flag.StringVar(&stopTimeout, "stopTimeout", "", "Timeout before the container is gracefully killed")
 
 	if value, ok := os.LookupEnv(containerNameEnv); ok {
 		flag.Set("container", value)
@@ -139,6 +142,14 @@ func parseFlags(flags *flags) {
 	}
 	if !(*flags).usePID && (*flags).useCGroup {
 		log.Panicln(logError, "Flag useCGroup depends upon flag usePID!")
+	}
+
+	if len(stopTimeout) > 0 {
+		if parsedTimeout, err := time.ParseDuration(stopTimeout); err != nil {
+			log.Panicln(logError, "Flag stopTimeout has invalid format!", err)
+		} else {
+			(*flags).stopTimeout = parsedTimeout
+		}
 	}
 
 	if os.Getenv(dockerHostEnv) != (*flags).dockerFlags.host {
@@ -244,7 +255,7 @@ loop:
 					if flags.notifySD {
 						daemon.SdNotify(false, daemon.SdNotifyStopping)
 					}
-					stopContainer(ctx, cli, flags.containerName, flags.stopTimeout)
+					stopContainer(ctx, cli, flags.containerName, &flags.stopTimeout)
 					break loop
 				}
 			}
