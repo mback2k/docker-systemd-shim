@@ -83,16 +83,24 @@ func parseFlags(flags *flags) {
 
 	log.SetFlags(log.Ldate | log.Ltime)
 
-	flag.StringVar(&((*flags).containerName), "container", "", "Name or ID of container")
-	flag.IntVar(&((*flags).startTries), "startTries", 3, "Number of tries to start the container if it is stopped")
-	flag.IntVar(&((*flags).checkTries), "checkTries", 3, "Number of tries to check the container if it is running")
+	flag.StringVar(&((*flags).containerName), "container", "",
+		"Name or ID of container")
+	flag.IntVar(&((*flags).startTries), "startTries", 3,
+		"Number of tries to start the container if it is stopped")
+	flag.IntVar(&((*flags).checkTries), "checkTries", 3,
+		"Number of tries to check the container if it is running")
 	flag.DurationVar(&((*flags).checkInterval), "checkInterval", time.Duration(time.Second),
 		"Interval delay between each container check")
-	flag.BoolVar(&((*flags).usePID), "usePID", true, "Check existence of process via container PID")
-	flag.BoolVar(&((*flags).useCGroup), "useCGroup", true, "Check existence of process via container CGroup")
-	flag.BoolVar(&((*flags).notifySD), "notifySD", true, "Notify systemd about service state changes")
-	flag.BoolVar(&((*flags).stopOnSIGINT), "stopOnSIGINT", false, "Stop the container on receiving signal SIGINT")
-	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true, "Stop the container on receiving signal SIGTERM")
+	flag.BoolVar(&((*flags).usePID), "usePID", true,
+		"Check existence of process via container PID")
+	flag.BoolVar(&((*flags).useCGroup), "useCGroup", true,
+		"Check existence of process via container CGroup")
+	flag.BoolVar(&((*flags).notifySD), "notifySD", true,
+		"Notify systemd about service state changes")
+	flag.BoolVar(&((*flags).stopOnSIGINT), "stopOnSIGINT", false,
+		"Stop the container on receiving signal SIGINT")
+	flag.BoolVar(&((*flags).stopOnSIGTERM), "stopOnSIGTERM", true,
+		"Stop the container on receiving signal SIGTERM")
 	flag.DurationVar(&((*flags).stopTimeout), "stopTimeout", time.Duration(time.Minute),
 		"Timeout before the container is gracefully killed")
 
