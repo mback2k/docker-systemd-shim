@@ -8,7 +8,6 @@ containers via systemd service units.
 
 Installation
 ------------
-
 You basically have two options to install this Go program package:
 
 1. If you have Go installed and configured on your PATH, just do the following go get inside your GOPATH to get the latest version:
@@ -53,3 +52,12 @@ WantedBy=docker.service
 ```
 
 Replace `your-container-name` with the name of the container you want to control with this unit file.
+
+Disclaimer
+----------
+This tool is meant as a supplement to standalone or unmanaged Docker containers and
+not as a replacement for Kubernetes, Docker Swarm or the docker run CLI command.
+This tool can only control previously created and already existing docker containers.
+
+I personally use this tool to manage pre-requisite containers for my Docker Swarm
+cluster, for example ndppd and tinc running inside containers managed via Ansible.
