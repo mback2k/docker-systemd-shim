@@ -7,12 +7,16 @@ matrix:
     - go: 1.x
       env: RELEASE=true
     - go: master
+      addons:
+          apt:
+            packages:
+            - upx-ucl
   allow_failures:
     - go: master
 
 after_success:
   - go build -ldflags="-s -w"
-
+  - upx --best --lzma docker-systemd-shim
 deploy:
   provider: releases
   skip_cleanup: true
