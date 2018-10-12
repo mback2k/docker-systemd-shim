@@ -53,8 +53,10 @@ func checkCGroup(pid int, cgroup string) bool {
 						return false
 					}
 				}
-				return true
 			}
+		}
+		if len(subsystems) > 0 {
+			return true
 		}
 	}
 	return false
