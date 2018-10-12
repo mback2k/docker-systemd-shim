@@ -73,15 +73,16 @@ func startContainer(ctx context.Context, cli *client.Client, containerName strin
 		CheckpointID:  "",
 		CheckpointDir: "",
 	}
+
 	log.Println(logNotice, "Starting container ...")
 	err := cli.ContainerStart(ctx, containerName, startOptions)
 	if err != nil {
 		log.Println(logError, err)
 		return false
-	} else {
-		log.Println(logNotice, "Successfully started container.")
-		return true
 	}
+
+	log.Println(logNotice, "Successfully started container.")
+	return true
 }
 
 func runContainer(ctx context.Context, cli *client.Client, containerName string,
