@@ -182,13 +182,15 @@ func watchContainer(ctx context.Context, cli *client.Client, containerName strin
 }
 
 func stopContainer(ctx context.Context, cli *client.Client, containerName string,
-	stopTimeout *time.Duration) {
+	stopTimeout *time.Duration) bool {
 
 	log.Println(logNotice, "Stopping container ...")
 	err := cli.ContainerStop(ctx, containerName, stopTimeout)
 	if err != nil {
 		log.Println(logError, err)
-	} else {
-		log.Println(logNotice, "Successfully stopped container.")
+		return false
 	}
+
+	log.Println(logNotice, "Successfully stopped container.")
+	return true
 }
