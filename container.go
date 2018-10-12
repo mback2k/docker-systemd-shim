@@ -41,31 +41,30 @@ func checkContainer(ctx context.Context, cli *client.Client, response types.Cont
 	usePID bool, useCGroup bool) bool {
 
 	log.Println(logNotice, "Checking container ...")
-	if usePID {
-		log.Println(logNotice, "Checking for PID existence ...")
-		if checkProcess(response.State.Pid) {
-			if useCGroup {
-				log.Println(logNotice, "Checking for PID existence in CGroup ...")
-				cgroup := fmt.Sprintf(dockerCGroupFormat, response.ID)
-				if checkCGroup(response.State.Pid, cgroup) {
-					log.Println(logNotice, "Successfully checked for PID existence in CGroup.")
-					return true
-				} else {
-					log.Println(logNotice, "Failed to check for PID existence in CGroup.")
-					return false
-				}
-			} else {
-				log.Println(logNotice, "Successfully checked for PID existence, but skipped CGroup.")
-				return true
-			}
-		} else {
-			log.Println(logNotice, "Failed to check for PID existence.")
-			return false
-		}
-	} else {
+	if !usePID {
 		log.Println(logInfo, "Skipped check for PID existence.")
 		return true
 	}
+
+	log.Println(logNotice, "Checking for PID existence ...")
+	if !checkProcess(response.State.Pid) {
+		log.Println(logNotice, "Failed to check for PID existence.")
+		return false
+	}
+	if !useCGroup {
+		log.Println(logNotice, "Successfully checked for PID existence, but skipped CGroup.")
+		return true
+	}
+
+	log.Println(logNotice, "Checking for PID existence in CGroup ...")
+	cgroup := fmt.Sprintf(dockerCGroupFormat, response.ID)
+	if !checkCGroup(response.State.Pid, cgroup) {
+		log.Println(logNotice, "Failed to check for PID existence in CGroup.")
+		return false
+	}
+
+	log.Println(logNotice, "Successfully checked for PID existence in CGroup.")
+	return true
 }
 
 func startContainer(ctx context.Context, cli *client.Client, containerName string) bool {
