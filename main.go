@@ -27,8 +27,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/coreos/go-systemd/daemon"
 )
 
 const (
@@ -221,7 +219,7 @@ loop:
 			}
 
 			if flags.notifySD {
-				daemon.SdNotify(false, daemon.SdNotifyReady)
+				notifyReady()
 			}
 
 			select {
@@ -232,7 +230,7 @@ loop:
 				if container {
 					log.Println(logNotice, "Container has stopped (notified via docker) and will be restarted.")
 					if flags.notifySD {
-						daemon.SdNotify(false, daemon.SdNotifyReloading)
+						notifyReloading()
 					}
 					continue loop
 				}
@@ -240,7 +238,7 @@ loop:
 				if process {
 					log.Println(logNotice, "Container has stopped (notified via ticker) and will be restarted.")
 					if flags.notifySD {
-						daemon.SdNotify(false, daemon.SdNotifyReloading)
+						notifyReloading()
 					}
 					continue loop
 				}
@@ -248,7 +246,7 @@ loop:
 				if stop {
 					log.Println(logNotice, "Container will be stopped due to system signal.")
 					if flags.notifySD {
-						daemon.SdNotify(false, daemon.SdNotifyStopping)
+						notifyStopping()
 					}
 					stopContainer(ctx, cli, flags.containerName, &flags.stopTimeout)
 					break loop

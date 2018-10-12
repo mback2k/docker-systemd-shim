@@ -24,7 +24,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -110,7 +109,7 @@ started:
 				containerStatus += " [" + response.State.Health.Status + "]"
 			}
 			log.Println(logNotice, "Reporting status to systemd ...")
-			res, err := daemon.SdNotify(false, "STATUS="+containerStatus)
+			res, err := notifyStatus(containerStatus)
 			if err != nil {
 				log.Println(logError, err)
 			} else if res {
