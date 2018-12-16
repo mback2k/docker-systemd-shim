@@ -5,6 +5,7 @@ containers via systemd service units.
 
 [![Build Status](https://travis-ci.org/mback2k/docker-systemd-shim.svg?branch=master)](https://travis-ci.org/mback2k/docker-systemd-shim)
 [![GoDoc](https://godoc.org/github.com/mback2k/docker-systemd-shim?status.svg)](https://godoc.org/github.com/mback2k/docker-systemd-shim)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mback2k/docker-systemd-shim)](https://goreportcard.com/report/github.com/mback2k/docker-systemd-shim)
 
 Installation
 ------------
