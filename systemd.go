@@ -1,6 +1,6 @@
 /*
 	docker-systemd-shim - Shim to allow easy container control via systemd
-	Copyright (C) 2018  Marc Hoersken <info@marc-hoersken.de>
+	Copyright (C) 2018 - 2019, Marc Hoersken <info@marc-hoersken.de>
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
