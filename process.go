@@ -40,6 +40,8 @@ func checkProcess(pid int) bool {
 }
 
 func checkCGroup(pid int, cgroup string) bool {
+	found := false
+
 	control, err := cgroups.Load(cgroups.V1, cgroups.StaticPath(cgroup))
 	if err == nil {
 		subsystems := control.Subsystems()
@@ -49,17 +51,18 @@ func checkCGroup(pid int, cgroup string) bool {
 			if err == nil {
 				for pi := 0; pi < len(processes); pi++ {
 					process := processes[pi]
-					if process.Pid == pid && !strings.HasSuffix(process.Path, cgroup) {
-						return false
+					if process.Pid == pid {
+						if !strings.HasSuffix(process.Path, cgroup) {
+							return false
+						}
+						found = true
 					}
 				}
 			}
 		}
-		if len(subsystems) > 0 {
-			return true
-		}
 	}
-	return false
+
+	return found
 }
 
 func watchProcess(ctx context.Context, pid int, cgroup string, interval time.Duration) <-chan bool {
