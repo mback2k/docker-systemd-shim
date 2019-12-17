@@ -166,9 +166,15 @@ func parseFlags(flags *flags) {
 func handleSignals(ctx context.Context, stop chan<- bool, flags flags) {
 	sigs := make(chan os.Signal, 1)
 
+	signal.Notify(sigs, syscall.SIGINT)
 	signal.Notify(sigs, syscall.SIGTERM)
 
 	go func() {
+		defer signal.Reset(syscall.SIGINT)
+		defer signal.Reset(syscall.SIGTERM)
+
+		defer close(sigs)
+
 	loop:
 		for {
 			select {
@@ -184,9 +190,6 @@ func handleSignals(ctx context.Context, stop chan<- bool, flags flags) {
 				}
 			}
 		}
-
-		signal.Reset(syscall.SIGTERM)
-		close(sigs)
 	}()
 }
 
