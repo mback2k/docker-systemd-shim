@@ -163,7 +163,7 @@ func parseFlags(flags *flags) {
 	log.Println(logInfo, "Provided container name or ID:", (*flags).containerName)
 }
 
-func handleSignals(ctx context.Context, stop chan<- bool, flags flags) {
+func handleSignals(ctx context.Context, stop chan<- bool, flags *flags) {
 	sigs := make(chan os.Signal, 1)
 
 	signal.Notify(sigs, syscall.SIGINT)
@@ -193,7 +193,7 @@ func handleSignals(ctx context.Context, stop chan<- bool, flags flags) {
 	}()
 }
 
-func workerLoop(ctx context.Context, stop <-chan bool, flags flags) {
+func workerLoop(ctx context.Context, stop <-chan bool, flags *flags) {
 loop:
 	for {
 		cli := createClient()
@@ -270,8 +270,8 @@ func main() {
 
 	stop := make(chan bool)
 
-	handleSignals(ctx, stop, flags)
-	workerLoop(ctx, stop, flags)
+	handleSignals(ctx, stop, &flags)
+	workerLoop(ctx, stop, &flags)
 
 	close(stop)
 }
