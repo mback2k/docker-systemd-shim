@@ -252,8 +252,8 @@ loop:
 						notifyStopping()
 					}
 					stopContainer(ctx, cli, flags.containerName, &flags.stopTimeout)
-					break loop
 				}
+				break loop
 			}
 		} else {
 			break loop
